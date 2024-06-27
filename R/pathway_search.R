@@ -53,7 +53,7 @@ pathway_search <- function(metab, organism, min_size = 2) {
   if (!is.character(organism) & !length(organism) == 1) {
     stop("`organism` must be a character.")
   }
-  kegg_org <- KEGGREST::keggList("organism")
+  kegg_org <- use_KEGGREST(KEGGREST::keggList("organism"))
   kegg_org <- as.data.frame(kegg_org)
   
   if (!(organism %in% kegg_org$organism)) {
@@ -63,7 +63,7 @@ pathway_search <- function(metab, organism, min_size = 2) {
   message("Starts searching for pathways...")
   
   # search KEGG pathways
-  pathlist <- KEGGREST::keggList("pathway", organism)
+  pathlist <- use_KEGGREST(KEGGREST::keggList("pathway", organism))
   pathlist <- as.data.frame(pathlist)
   colnames(pathlist) <- "pathway_name"
   pathlist <- rownames_to_column(pathlist, "pathway_code")
@@ -74,7 +74,8 @@ pathway_search <- function(metab, organism, min_size = 2) {
                                 fixed = TRUE)
   
   comp <- sapply(1:nrow(pathlist), function(i) {
-    path <- KEGGREST::keggGet(paste0("path:", pathlist$pathway_code[i]))
+    path <- use_KEGGREST(KEGGREST::keggGet(paste0("path:",
+                                                  pathlist$pathway_code[i])))
     path <- as.data.frame(path[[1]]$COMPOUND)
   })
   names(comp) <- pathlist$pathway_code

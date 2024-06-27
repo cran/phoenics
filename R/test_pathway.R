@@ -138,7 +138,7 @@ test_pathway <- function(quantif, design, pathways = "auto", fixed, random,
       stop("Package 'KEGGREST' not available. Automatic pathway searching", 
            " cannot be performed.")
     }
-    kegg_org <- KEGGREST::keggList("organism")
+    kegg_org <- use_KEGGREST(KEGGREST::keggList("organism"))
     kegg_org <- as.data.frame(kegg_org)
     kegg_org <- unique(kegg_org$organism)
     

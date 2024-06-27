@@ -96,10 +96,10 @@ overlap_coefficient <- function(pathwayA, pathwayB, pathways = NULL, organism = 
       }
       
       code <- substr(pathwayA, start = 1, stop = nchar(pathwayA) - 5)
-      kegg_org <- KEGGREST::keggList("organism")
+      kegg_org <- use_KEGGREST(KEGGREST::keggList("organism"))
       
       if (!code %in% kegg_org) {
-        pathlist <- KEGGREST::keggList("pathway", organism)
+        pathlist <- use_KEGGREST(KEGGREST::keggList("pathway", organism))
         pathlist <- as.data.frame(pathlist)
         pathlist$pathway_code <- rownames(pathlist)
         
@@ -112,7 +112,7 @@ overlap_coefficient <- function(pathwayA, pathwayB, pathways = NULL, organism = 
         pathwayB <- pathlist[pathlist$pathlist == pathwayB, "pathway_code"]
       }
       
-      pathinfo <- KEGGREST::keggGet(c(pathwayA, pathwayB))
+      pathinfo <- use_KEGGREST(KEGGREST::keggGet(c(pathwayA, pathwayB)))
       A <- pathinfo[[1]]$COMPOUND
       B <- pathinfo[[2]]$COMPOUND
     }
