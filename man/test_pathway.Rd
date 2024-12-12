@@ -13,7 +13,8 @@ test_pathway(
   npc = 1L,
   model = c("lmer", "blmer"),
   organism = NULL,
-  min_size = 2
+  min_size = 2,
+  analysis = c("PCA", "MFA")
 )
 }
 \arguments{
@@ -27,8 +28,8 @@ in columns. Column names must be provided and are used as arguments for
 \code{fixed} and \code{random}}
 
 \item{pathways}{data.frame or matrix with metabolites in rows (all 
-metabolites in columns of \code{quantif} must have a row in this input) and the
-following information in columns: \itemize{
+metabolites in columns of \code{quantif} must have a row in this input) and
+the following information in columns: \itemize{
  \item \code{metabolite_code} metabolite code
  \item \code{metabolite_name} metabolite name
  \item \code{pathway_code} pathway code (identifier)
@@ -36,7 +37,9 @@ following information in columns: \itemize{
 }}
 
 \item{fixed}{character vector of fixed effects to be included in the model.
-They must correspond to column names of \code{design}}
+They must correspond to column names of \code{design}. If
+\code{analysis = "MFA"}, the first fixed effect must correspond to the time
+effect}
 
 \item{random}{character vector of random effects to be included in the model.
 They must correspond to column names of \code{design}}
@@ -51,16 +54,21 @@ using \link[lme4]{lmer} or \link[blme]{blmer}. Default to \code{"lmer"}}
 
 \item{min_size}{minimal number of metabolites in a pathway. Required if
 \code{pathways = "auto"} and ignored otherwise. Default to \code{2}}
+
+\item{analysis}{character string indicating if the pathway scores are
+obtained using \link[FactoMineR]{PCA} or \link[FactoMineR]{MFA}}
 }
 \value{
-an object of class \code{pathwayRes} which is a list of pathway 
-results. Each element of the list contain the following entries:
+an object of class \code{PCApath} or \code{MFApath} that inherits  
+from class \code{pathwayRes} (a list of pathway results). Each element of the 
+list contains the following entries:
 \item{pathway_name}{a character corresponding to the pathway name}
 \item{pathway_code}{a character corresponding to the pathway code}
 \item{metabolites}{a data.frame with the names and codes of the quantified
 metabolites in the pathway}
-\item{PCA}{the result of the pathway PCA (a \code{PCA} object as obtained 
-from \link[FactoMineR]{PCA})}
+\item{PCA}{the result of the pathway PCA or MFA (a \code{PCA} object as 
+obtained from \link[FactoMineR]{PCA} or a \code{MFA} object as obtained
+from \link[FactoMineR]{MFA})}
 \item{model}{the output of the mixed model fit}
 \item{test_pathway}{a data.frame with the p-values for each tested fixed
 effect}
@@ -68,7 +76,7 @@ effect}
 \description{
 Perform a differential analysis at pathway level based on 
 metabolite quantifications and information on pathway metabolite composition.
-The method relies on a PCA step.
+The method relies on a PCA or a MFA step.
 }
 \details{
 If \code{pathways = "auto"}, information on pathways in which metabolites are
@@ -85,12 +93,17 @@ out_test <- test_pathway(quantif, design, pathways,
                          npc = 2, model = "blmer")
 out_test
 
+out_test2 <- test_pathway(quantif, design, pathways, 
+                         fixed = c("Age", "Treatment"), random = "Mouse", 
+                         npc = 2, model = "blmer", analysis = "MFA")
+out_test2
+
 if (requireNamespace("KEGGREST", quietly = TRUE)) { 
 \donttest{
-  out_test2 <- test_pathway(quantif, design, pathways = "auto", 
+  out_test3 <- test_pathway(quantif, design, pathways = "auto", 
                             fixed = c("Age", "Treatment"), random = "Mouse", 
                             npc = 2, model = "blmer", organism = "mmu")
-  out_test2
+  out_test3
  }
 }
 

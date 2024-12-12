@@ -21,7 +21,7 @@
   x,
   ...,
   pathway_id = NULL,
-  plot = c("eig", "var", "ind"),
+  plot = c("eig", "var", "ind", "group"),
   habillage = "none"
 )
 
@@ -39,7 +39,7 @@ adjust_pval(object, method = p.adjust.methods, n = length(object))
 \item{pathway_id}{a character string or vector of pathway codes or names}
 
 \item{plot}{a character string indicating the type of plot to return. Default
-to \code{"eig"} (the screegraph of the PCA is displayed)}
+to \code{"eig"} (the screegraph of the PCA or MFA is displayed)}
 
 \item{habillage}{a character string indicating the column of the design used 
 to color the individuals. Only used when \code{plot = "ind"}. Default to 
@@ -77,10 +77,19 @@ out_test <- test_pathway(quantif, design, pathways,
                          fixed = c("Age", "Treatment"), random = "Mouse", 
                          npc = 2, model = "blmer")
 summary(out_test)
+out_test2 <- test_pathway(quantif, design, pathways, 
+                         fixed = c("Age", "Treatment"), random = "Mouse", 
+                         npc = 2, model = "blmer", analysis = "MFA")
+summary(out_test2)
 print(out_test)
+print(out_test2)
 plot(out_test)
-plot(out_test, "mmu00052", plot = "var")
-plot(out_test, "mmu00052", plot = "ind", habillage = "Age")
+plot(out_test, pathway_id = "mmu00052", plot = "var")
+plot(out_test, pathway_id = "mmu00052", plot = "ind", habillage = "Age")
+plot(out_test2, pathway_id = "mmu00562", plot = "eig")
+plot(out_test2, pathway_id = "mmu00562", plot = "var")
+plot(out_test2, pathway_id = "mmu00562", plot = "ind")
+plot(out_test2, pathway_id = "mmu00562", plot = "group")
 head(out_test)
 extract(out_test, "mmu00562")
 adj_pval <- adjust_pval(out_test)

@@ -2,7 +2,7 @@
 #' 
 #' @description Perform a differential analysis at pathway level based on 
 #' metabolite quantifications and information on pathway metabolite composition.
-#' The method relies on a PCA step.
+#' The method relies on a PCA or a MFA step.
 #' 
 #' @param quantif data.frame or matrix of the metabolite quantification with 
 #' samples in rows (sample identifiers must be row names) and metabolites in 
@@ -12,8 +12,8 @@
 #' in columns. Column names must be provided and are used as arguments for
 #' \code{fixed} and \code{random}
 #' @param pathways data.frame or matrix with metabolites in rows (all 
-#' metabolites in columns of \code{quantif} must have a row in this input) and the
-#' following information in columns: \itemize{
+#' metabolites in columns of \code{quantif} must have a row in this input) and
+#' the following information in columns: \itemize{
 #'  \item \code{metabolite_code} metabolite code
 #'  \item \code{metabolite_name} metabolite name
 #'  \item \code{pathway_code} pathway code (identifier)
@@ -23,32 +23,38 @@
 #' @param model a character string indicating if the model has to be fitted
 #' using \link[lme4]{lmer} or \link[blme]{blmer}. Default to \code{"lmer"}
 #' @param fixed character vector of fixed effects to be included in the model.
-#' They must correspond to column names of \code{design}
+#' They must correspond to column names of \code{design}. If
+#' \code{analysis = "MFA"}, the first fixed effect must correspond to the time
+#' effect
 #' @param random character vector of random effects to be included in the model.
 #' They must correspond to column names of \code{design}
 #' @param organism organism code in KEGG database. Required if
 #' \code{pathways = "auto"} and ignored otherwise
 #' @param min_size minimal number of metabolites in a pathway. Required if
 #' \code{pathways = "auto"} and ignored otherwise. Default to \code{2}
+#' @param analysis character string indicating if the pathway scores are
+#' obtained using \link[FactoMineR]{PCA} or \link[FactoMineR]{MFA}
 #' 
-#' @return an object of class \code{pathwayRes} which is a list of pathway 
-#' results. Each element of the list contain the following entries:
+#' @return an object of class \code{PCApath} or \code{MFApath} that inherits  
+#' from class \code{pathwayRes} (a list of pathway results). Each element of the 
+#' list contains the following entries:
 #' \item{pathway_name}{a character corresponding to the pathway name}
 #' \item{pathway_code}{a character corresponding to the pathway code}
 #' \item{metabolites}{a data.frame with the names and codes of the quantified
 #' metabolites in the pathway}
-#' \item{PCA}{the result of the pathway PCA (a \code{PCA} object as obtained 
-#' from \link[FactoMineR]{PCA})}
+#' \item{PCA}{the result of the pathway PCA or MFA (a \code{PCA} object as 
+#' obtained from \link[FactoMineR]{PCA} or a \code{MFA} object as obtained
+#' from \link[FactoMineR]{MFA})}
 #' \item{model}{the output of the mixed model fit}
 #' \item{test_pathway}{a data.frame with the p-values for each tested fixed
 #' effect}
 #' 
-#' @importFrom FactoMineR PCA
+#' @importFrom FactoMineR PCA MFA
 #' @importFrom lme4 lmer
 #' @importFrom blme blmer
 #' @importFrom tibble column_to_rownames rownames_to_column
 #' @importFrom stats as.formula anova
-#' @importFrom tidyr separate
+#' @importFrom tidyr separate pivot_wider
 #' 
 #' @examples 
 #' data("MTBLS422")
@@ -58,12 +64,17 @@
 #'                          npc = 2, model = "blmer")
 #' out_test
 #' 
+#' out_test2 <- test_pathway(quantif, design, pathways, 
+#'                          fixed = c("Age", "Treatment"), random = "Mouse", 
+#'                          npc = 2, model = "blmer", analysis = "MFA")
+#' out_test2
+#' 
 #' if (requireNamespace("KEGGREST", quietly = TRUE)) { 
 #' \donttest{
-#'   out_test2 <- test_pathway(quantif, design, pathways = "auto", 
+#'   out_test3 <- test_pathway(quantif, design, pathways = "auto", 
 #'                             fixed = c("Age", "Treatment"), random = "Mouse", 
 #'                             npc = 2, model = "blmer", organism = "mmu")
-#'   out_test2
+#'   out_test3
 #'  }
 #' }
 #' 
@@ -85,8 +96,8 @@
 #' @export
 
 test_pathway <- function(quantif, design, pathways = "auto", fixed, random, 
-                         npc = 1L, model = c("lmer", "blmer"),
-                         organism = NULL, min_size = 2) {
+                         npc = 1L, model = c("lmer", "blmer"), organism = NULL,
+                         min_size = 2, analysis = c("PCA", "MFA")) {
   
   # Inputs tests
   if (!is.character(fixed)) {
@@ -105,7 +116,6 @@ test_pathway <- function(quantif, design, pathways = "auto", fixed, random,
     stop("Random effect must be in `design` column names.")
   }
   
-  
   if (!identical(sort(rownames(quantif)), sort(rownames(design)))) {
     stop("`quantif` and `design` row names must be identical.")
   } 
@@ -118,6 +128,7 @@ test_pathway <- function(quantif, design, pathways = "auto", fixed, random,
   }
   
   model <- match.arg(model)
+  analysis <- match.arg(analysis)
   
   if (round(npc) != npc) {
     stop("`npc` must be an integer.")
@@ -188,16 +199,48 @@ test_pathway <- function(quantif, design, pathways = "auto", fixed, random,
     quantif_path <- merge(quantif_path, design, by = 0)
     quantif_path <- column_to_rownames(quantif_path, "Row.names")
     
-    res_pca <- PCA(quantif_path, graph = FALSE, ncp = npc,
-                   quali.sup = colnames(design))
+    if (analysis == "PCA") {
+      res_pca <- PCA(quantif_path, graph = FALSE, ncp = npc,
+                     quali.sup = colnames(design))
+      
+      score <- data.frame(res_pca$ind$coord[, 1:npc, drop = FALSE])
+      colnames(score) <- paste0(path, "_PC", 1:ncol(score))
+      
+      score_path <- merge(score, design, by = 0)
+      score_path <- column_to_rownames(score_path, "Row.names")
+    }
     
-    score <- data.frame(res_pca$ind$coord[, 1:npc, drop = FALSE])
-    colnames(score) <- paste0(path, "_PC", 1:ncol(score))
+    if (analysis == "MFA") {
+      nb_metab <- length(metab_path)
+      timepoints <- unique(quantif_path[, fixed[1]])
+      
+      quantif_path_wide <- pivot_wider(quantif_path,
+                                       id_cols = c(fixed[-1], random),
+                                       names_from = fixed[1],
+                                       values_from = metab_path,
+                                       names_vary = "slowest")
+      quantif_path_wide <- as.data.frame(quantif_path_wide)
+      rownames(quantif_path_wide) <- quantif_path_wide[, random[1]]
+      
+      res_pca <- MFA(quantif_path_wide,
+                     group = c(length(c(fixed[-1], random)),
+                               rep(nb_metab, length(timepoints))),
+                     type = c("n", rep("s", length(timepoints))),
+                     name.group = c("supplementary",
+                                    paste0("date_", timepoints)),
+                     num.group.sup = 1, graph = FALSE)
+      
+      score <- data.frame(res_pca$ind$coord.partiel[, 1:npc, drop = FALSE])
+      colnames(score) <- paste0(path, "_PC", 1:ncol(score))
+      
+      score_path <- rownames_to_column(score, "ind")
+      score_path <- separate(score_path, col = "ind",
+                             into = c(random[1], fixed[1]), sep = ".date_")
+      score_path <- merge(unique(design[, c(fixed[-1], random)]), score_path, 
+                          by = c(random[1]))
+    }
     
     # Mixed model
-    score_path <- merge(score, design, by = 0)
-    score_path <- column_to_rownames(score_path, "Row.names")
-    
     form <- paste0("~ ", paste(fixed, collapse = " + "), " + ", 
                    paste(paste0("(1|", random, ")"), collapse = " + "))
     fmla <- sapply(paste0(colnames(score), form), as.formula)
@@ -265,11 +308,17 @@ test_pathway <- function(quantif, design, pathways = "auto", fixed, random,
     res <- list("pathway_name" = path_name, "pathway_code" = path_code,
                 "metabolites" = out_met, "PCA" = res_pca, "model" = res_lmm,
                 "test_pathway" = res_test)
+    
     return(res)
   })
   
   names(res_pathway) <- unique(pathways$pathway_name)
-  class(res_pathway) <- "pathwayRes"
+  if (analysis == "PCA") {
+    class(res_pathway) <- c("PCApath", "pathwayRes")
+  }
+  if (analysis == "MFA") {
+    class(res_pathway) <- c("MFApath", "pathwayRes")
+  }
   
   return(res_pathway)
 }

@@ -18,16 +18,33 @@ NULL
 #'                          fixed = c("Age", "Treatment"), random = "Mouse", 
 #'                          npc = 2, model = "blmer")
 #' summary(out_test)
+#' out_test2 <- test_pathway(quantif, design, pathways, 
+#'                          fixed = c("Age", "Treatment"), random = "Mouse", 
+#'                          npc = 2, model = "blmer", analysis = "MFA")
+#' summary(out_test2)
 #' @exportS3Method
 summary.pathwayRes <- function(object, ...) {
-  cat("Number of pathways: ", length(object), "\n")
-  cat("Tested effects: ",  object[[1]]$test_pathway$Fixed_effect)
+  cat("Number of pathways:", length(object), "\n")
+  cat("Tested effects:", object[[1]]$test_pathway$Fixed_effect)
+}
+
+#' @exportS3Method 
+summary.PCApath <- function(object, ...) {
+  cat("phoenics method based on PCA\n")
+  NextMethod()
+}
+
+#' @exportS3Method 
+summary.MFApath <- function(object, ...) {
+  cat("phoenics method based on MFA\n")
+  NextMethod()
 }
 
 #' @rdname pathwayRes
 #' @aliases print.pathwayRes
 #' @examples 
 #' print(out_test)
+#' print(out_test2)
 #' @exportS3Method 
 print.pathwayRes <- function(x, ...) {
   cat("A list of pathways which contains for each pathway: \n")
@@ -35,9 +52,21 @@ print.pathwayRes <- function(x, ...) {
   cat("$", names(path_res)[1], ": ", "Pathway name \n", sep = "")
   cat("$", names(path_res)[2], ": ", "Pathway code \n", sep = "")
   cat("$", names(path_res)[3], ": ", "Metabolites in the pathway \n", sep = "")
-  cat("$", names(path_res)[4], ": ", "PCA results \n", sep = "")
+  cat("$", names(path_res)[4], ": ", "Factor analysis results \n", sep = "")
   cat("$", names(path_res)[5], ": ", "Model results \n", sep = "")
   cat("$", names(path_res)[6], ": ", "Pathway test results \n", sep = "")
+}
+
+#' @exportS3Method 
+print.PCApath <- function(x, ...) {
+  cat("phoenics method based on PCA\n")
+  NextMethod()
+}
+
+#' @exportS3Method 
+print.MFApath <- function(x, ...) {
+  cat("phoenics method based on MFA\n")
+  NextMethod()
 }
 
 #' @rdname pathwayRes
@@ -45,18 +74,43 @@ print.pathwayRes <- function(x, ...) {
 #' @param pathway_id a character string or vector of pathway codes or names.
 #' Default to \code{NULL} in which case the first pathway is displayed
 #' @param plot a character string indicating the type of plot to return. Default
-#' to \code{"eig"} (the screegraph of the PCA is displayed)
+#' to \code{"eig"} (the screegraph of the PCA or MFA is displayed)
 #' @param habillage a character string indicating the column of the design used 
 #' to color the individuals. Only used when \code{plot = "ind"}. Default to 
 #' \code{"none"} (no color)
-#' @importFrom factoextra fviz_pca_ind fviz_eig fviz_pca_var
+#' @importFrom factoextra fviz_pca_ind fviz_eig fviz_pca_var fviz_mfa_ind fviz_mfa_var
 #' @examples 
 #' plot(out_test)
-#' plot(out_test, "mmu00052", plot = "var")
-#' plot(out_test, "mmu00052", plot = "ind", habillage = "Age")
+#' plot(out_test, pathway_id = "mmu00052", plot = "var")
+#' plot(out_test, pathway_id = "mmu00052", plot = "ind", habillage = "Age")
+#' plot(out_test2, pathway_id = "mmu00562", plot = "eig")
+#' plot(out_test2, pathway_id = "mmu00562", plot = "var")
+#' plot(out_test2, pathway_id = "mmu00562", plot = "ind")
+#' plot(out_test2, pathway_id = "mmu00562", plot = "group")
 #' @exportS3Method
 plot.pathwayRes <- function(x, ..., pathway_id = NULL, 
-                            plot = c("eig", "var", "ind"), habillage = "none") {
+                            plot = c("eig", "var", "ind", "group"),
+                            habillage = "none") {
+  
+  plot <- match.arg(plot)
+  
+  if (is.null(pathway_id)) {
+    pathway_id <- names(x)[1]
+  }
+  
+  object_sub <- extract.pathwayRes(x, pathway_id)
+  
+  if (plot == "eig") {
+    p <- factoextra::fviz_eig(object_sub[[1]]$PCA, addlabels = TRUE,
+                              title = object_sub[[1]]$pathway_name)
+    return(p)
+  }
+}
+
+#' @exportS3Method
+plot.PCApath <- function(x, ..., pathway_id = NULL, 
+                         plot = c("eig", "var", "ind", "group"),
+                         habillage = "none") {
   
   plot <- match.arg(plot)
   
@@ -66,23 +120,57 @@ plot.pathwayRes <- function(x, ..., pathway_id = NULL,
   }
   
   object_sub <- extract.pathwayRes(x, pathway_id)
-  lapply(object_sub, function (path_res) {
-    if (plot == "var") {
-      p <- factoextra::fviz_pca_var(path_res$PCA, title = path_res$pathway_name,
-                                    repel = TRUE)
-    }
-    if (plot == "ind") {
-      p <- factoextra::fviz_pca_ind(path_res$PCA, habillage = habillage, 
-                                    title = path_res$pathway_name, 
-                                    geom = "point", pointsize = 2, 
-                                    mean.point = FALSE)
-    }
-    if (plot == "eig") {
-      p <- factoextra::fviz_eig(path_res$PCA, addlabels = TRUE,
-                                title = path_res$pathway_name)
-    }
+  
+  if (plot == "var") {
+    p <- factoextra::fviz_pca_var(object_sub[[1]]$PCA,
+                                  title = object_sub[[1]]$pathway_name,
+                                  repel = TRUE)
     return(p)
-  })
+  }
+  if (plot == "ind") {
+    p <- factoextra::fviz_pca_ind(object_sub[[1]]$PCA, habillage = habillage,
+                                  title = object_sub[[1]]$pathway_name,
+                                  geom = "point", pointsize = 2,
+                                  mean.point = FALSE)
+    return(p)
+  }
+  NextMethod()
+}
+
+#' @exportS3Method
+plot.MFApath <- function(x, ..., pathway_id = NULL, 
+                         plot = c("eig", "var", "ind", "group"),
+                         habillage = "none") {
+  
+  plot <- match.arg(plot)
+  
+  if (is.null(pathway_id)) {
+    message("`pathway_id` not specified... defaulting to the first pathway")
+    pathway_id <- names(x)[1]
+  }
+  
+  object_sub <- extract.pathwayRes(x, pathway_id)
+  
+  if (plot == "group") {
+    p <- factoextra::fviz_mfa_var(object_sub[[1]]$PCA, choice = "group",
+                                  title = object_sub[[1]]$pathway_name,
+                                  repel = TRUE)
+    return(p)
+  }
+  if (plot == "var") {
+    p <- factoextra::fviz_mfa_var(object_sub[[1]]$PCA, choice = "quanti.var",
+                                  title = object_sub[[1]]$pathway_name,
+                                  repel = TRUE)
+    return(p)
+  }
+  if (plot == "ind") {
+    p <- factoextra::fviz_mfa_ind(object_sub[[1]]$PCA, partial = "all",
+                                  habillage = habillage,
+                                  title = object_sub[[1]]$pathway_name,
+                                  pointsize = 2)
+    return(p)
+  }
+  NextMethod()
 }
 
 #' @rdname pathwayRes
@@ -117,10 +205,11 @@ extract <- function(object, pathway_id) {
 
 #' @exportS3Method
 extract.pathwayRes <- function(object, pathway_id) {
+  class_sub <- class(object)
   cond <- lapply(object, function(path) path$pathway_code %in% pathway_id |
                    path$pathway_name %in% pathway_id)
   object_sub <- object[unlist(cond)]
-  class(object_sub) <- "pathwayRes"
+  class(object_sub) <- class_sub
   return(object_sub)
 }
 
