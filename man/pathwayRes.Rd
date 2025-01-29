@@ -5,7 +5,6 @@
 \alias{summary.pathwayRes}
 \alias{print.pathwayRes}
 \alias{plot.pathwayRes}
-\alias{head}
 \alias{head.pathwayRes}
 \alias{extract}
 \alias{extract.pathwayRes}
@@ -25,7 +24,7 @@
   habillage = "none"
 )
 
-head(object)
+\method{head}{pathwayRes}(x, ...)
 
 extract(object, pathway_id)
 
@@ -90,7 +89,6 @@ plot(out_test2, pathway_id = "mmu00562", plot = "eig")
 plot(out_test2, pathway_id = "mmu00562", plot = "var")
 plot(out_test2, pathway_id = "mmu00562", plot = "ind")
 plot(out_test2, pathway_id = "mmu00562", plot = "group")
-head(out_test)
 extract(out_test, "mmu00562")
 adj_pval <- adjust_pval(out_test)
 }

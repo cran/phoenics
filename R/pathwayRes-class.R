@@ -174,19 +174,12 @@ plot.MFApath <- function(x, ..., pathway_id = NULL,
 }
 
 #' @rdname pathwayRes
-#' @aliases head
 #' @aliases head.pathwayRes
-#' @examples 
-#' head(out_test)
-#' @export
-head <- function(object) {
-  UseMethod("head")
-}
-
+#' @importFrom utils head
 #' @exportS3Method
-head.pathwayRes <- function(object){
+head.pathwayRes <- function(x, ...){
   cat("Pathways: \n")
-  names(object)
+  names(x)
 }
 
 #' @rdname pathwayRes

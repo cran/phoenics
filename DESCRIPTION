@@ -1,11 +1,11 @@
 Package: phoenics
 Type: Package
 Title: Pathways Longitudinal and Differential Analysis in Metabolomics
-Version: 0.4
-Date: 2024-12-12
+Version: 0.5
+Date: 2025-01-29
 Depends: R (>= 4.0.0)
 Imports: lme4, blme, tibble, FactoMineR, factoextra, tidyr, stats
-Suggests: KEGGREST
+Suggests: knitr, KEGGREST
 Authors@R: c(person("Camille", "Guilmineau", role = c("aut", "cre"), 
                     email = "camille.guilmineau@inrae.fr"),
              person("Remi", "Servien", role = "aut", 
@@ -26,8 +26,10 @@ NeedsCompilation: no
 URL: https://forgemia.inra.fr/panoramics/phoenics
 LazyData: true
 RoxygenNote: 7.3.2
-Packaged: 2024-12-12 09:37:28 UTC; cguilmineau
+VignetteBuilder: knitr
+Language: en-US
+Packaged: 2025-01-29 12:57:25 UTC; nathalie
 Author: Camille Guilmineau [aut, cre],
   Remi Servien [aut] (<https://orcid.org/0000-0003-1270-1843>),
   Nathalie Vialaneix [aut] (<https://orcid.org/0000-0003-1156-0639>)
-Date/Publication: 2024-12-12 10:00:12 UTC
+Date/Publication: 2025-01-29 14:20:06 UTC

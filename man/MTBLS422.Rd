@@ -26,7 +26,7 @@ antibiotic treatments, ciprofloxacin and vancomycin-imipenem on mice.
 \details{
 The raw dataset have been made available on MetaboLights (with the
 id MTBLS422 \url{https://www.ebi.ac.uk/metabolights/editor/MTBLS422}) by
-[Choo \emph{et al.}, 2017]. Metabolites quantifications were obtained
+[Choo \emph{et al.}, 2017]. Metabolite quantifications were obtained
 based on the raw signal using \code{ASICS} package. Pathways were obtained
 using \code{KEGGREST} package. The datasets provided for the example
 are a subset of the original dataset.

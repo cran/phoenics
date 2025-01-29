@@ -1,0 +1,173 @@
+---
+title: "Introduction to phoenics"
+author: "Camille Guilmineau, Rémi Servien et Nathalie Vialaneix"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: yes
+vignette: >
+  %\VignetteIndexEntry{Introduction to phoenics}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+# Introduction
+
+`phoenics` is an **R** package designed to perform a differential analysis for
+metabolomics datasets, while accounting for metabolomic pathway information.
+More precisely, `phoenics` performs a test at pathway level based on metabolite 
+quantifications and information on pathway metabolite composition. The 
+automatic query of metabolic pathways is implemented in the package.
+
+```{r loadLib, message=FALSE}
+library("phoenics")
+```
+
+# MTBLS422 dataset
+
+The dataset `MTBLS422` contains data obtained from the study 
+[Choo *et al.*, 2017](#choo). Raw data have been made available on MetaboLights 
+(with the id MTBLS422 https://www.ebi.ac.uk/metabolights/editor/MTBLS422). 
+Metabolite quantifications were obtained based on the raw signal using 
+[ASICS](https://www.bioconductor.org/packages/release/bioc/html/ASICS.html) 
+package and are provided in the object `quantif` included in the dataset.
+```{r loadData}
+data("MTBLS422")
+ls()
+head(quantif)
+```
+
+They can be transformed into a data format suitable for `phoenics` with:
+```{r quantif}
+quantif_f <- from_ASICS_to_PHOENICS(quantif)
+head(quantif_f)
+```
+
+In addition, pathway information was obtained using 
+[KEGGREST](https://www.bioconductor.org/packages/release/bioc/html/KEGGREST.html) 
+package and is included in `pathways`:
+```{r pathways}
+head(pathways)
+```
+
+The user can also query this information using the function `pathway_search`:
+```{r searchPaths, eval=FALSE}
+pathways <- pathway_search(metab = colnames(quantif), organism = "mmu")
+```
+
+# `phoenics` test
+
+## Perform test
+
+The test implemented in `phoenics` is a mixed model with fixed and random
+effects. The current study design is provided in `design`:
+```{r design}
+head(design)
+```
+
+The `Age` and `Treatment` are thus used as fixed effects and the `Mouse` is 
+used as a random effect:
+```{r test, message=FALSE}
+out_test <- test_pathway(quantif_f, design, pathways, 
+                         fixed = c("Age", "Treatment"), random = "Mouse", 
+                         npc = 2, model = "blmer")
+out_test
+```
+
+## Access test results
+
+Results are organized as a list where each element of the list corresponds to a
+tested pathway:
+```{r pathwayNames}
+names(out_test)
+```
+
+The function `extract` can be used to extract results on a given pathway:
+```{r extract}
+res_1 <- extract(out_test, "Galactose metabolism")
+```
+
+Fixed effect $p$-values and full model are provided, respectively, in entries
+`test_pathway` and `model` of this object.
+```{r detailedRes}
+res_1[[1]]$test_pathway
+res_1[[1]]$model
+```
+
+In addition, adjusted $p$-values [(BH method)](#BH) across pathways can be 
+directly obtained with the function `adjust_pval`:
+```{r BH}
+adjust_pval(out_test)
+```
+
+
+## Explore PCA results
+
+PCA results can be explored using the entry PCA:
+```{r}
+res_1[[1]]$PCA
+```
+
+In particular, `phoenics` implements some plots that can be directly obtained
+using
+```{r plotPCA}
+plot(out_test, pathway_id = "Galactose metabolism", plot = "var")
+plot(out_test, pathway_id = "Galactose metabolism", plot = "ind", 
+     habillage = "Age")
+plot(out_test, pathway_id = "Galactose metabolism", plot = "eig")
+plot(out_test, pathway_id = "Galactose metabolism", plot = "var")
+plot(out_test, pathway_id = "Galactose metabolism", plot = "group")
+```
+
+# Options of `phoenics` main test function
+
+
+## Switching from PCA to MFA
+
+A MFA step, more suited to  can be used in place of the PCA. In this case, the
+levels first fixed effect are used to split the effects into different tables 
+which are matched by the levels of the first random effect (the typical case is
+when the first fixed effect contains information on time points in a repeated
+measurement study where samples are provided by the first random effect).
+
+```{r testMFA}
+out_test <- test_pathway(quantif_f, design, pathways, 
+                         fixed = c("Age", "Treatment"), random = "Mouse", 
+                         npc = 2, model = "blmer", analysis = "MFA")
+out_test
+```
+
+
+## Wrapper to automatically query pathways
+
+The option `pathways = "auto"` can also be used to automatically query 
+KEGGREST instead of performing the two step analysis relying on 
+`test_pathway`:
+
+```{r auto, eval=FALSE}
+out_test3 <- test_pathway(quantif, design, pathways = "auto", 
+                          fixed = c("Age", "Treatment"), random = "Mouse", 
+                          npc = 2, model = "blmer", organism = "mmu")
+out_test3
+```
+
+
+# References
+
+[1] <a name="choo"></a> Choo J. M., Kanno T., Zain N. M. M., Leong L. E. X., 
+Abell G. C. J., Keeble J. E., Bruce K. D., Mason A. J., Rogers G. B. (2017). 
+Divergent relationships between fecal microbiota and metabolome following 
+distinct antibiotic-induced disruptions. *mSphere*, **2**(1).
+DOI: [10.1128/msphere.00005-17](https://dx.doi.org/10.1128/msphere.00005-17).
+
+[2] <a name="BH"></a> Benjamini Y, Hochberg Y (1995). Controlling the false 
+discovery rate: a practical and powerful approach to multiple testing. 
+*Journal of the Royal Statistical Society, Series B*, **57**(1): 289–300. 
+DOI: [10.1111/j.2517-6161.1995.tb02031.x](https://dx.doi.org/10.1111/j.2517-6161.1995.tb02031.x)
+
+
+# Session information
+
+```{r session}
+sessionInfo()
+```

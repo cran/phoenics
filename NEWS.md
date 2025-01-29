@@ -1,3 +1,8 @@
+# phoenics 0.5 [2025-12-29]
+
+* added a vignette
+* fixed a bug on 'head' method (to prevent masking utils::head)
+
 # phoenics 0.4 [2024-12-12]
 
 ## New features
