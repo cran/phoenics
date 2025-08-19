@@ -17,7 +17,8 @@ vignette: >
 metabolomics datasets, while accounting for metabolomic pathway information.
 More precisely, `phoenics` performs a test at pathway level based on metabolite 
 quantifications and information on pathway metabolite composition. The 
-automatic query of metabolic pathways is implemented in the package.
+automatic query of metabolic pathways is implemented in the package. See
+[Guilmineau *et al.*, 2025](#guilmineau).
 
 ```{r loadLib, message=FALSE}
 library("phoenics")
@@ -154,13 +155,18 @@ out_test3
 
 # References
 
-[1] <a name="choo"></a> Choo J. M., Kanno T., Zain N. M. M., Leong L. E. X., 
+[1] <a name="guilmineau"></a> Guilmineau, C., Tremblay-Franco, M., 
+Vialaneix, N., & Servien, R. (2025). phoenics: a novel statistical approach for
+longitudinal metabolomic pathway analysis. *BMC Bioinformatics*, **26**: 105.
+DOI: [10.1186/s12859-025-06118-z](http://dx.doi.org/10.1186/s12859-025-06118-z).
+
+[2] <a name="choo"></a> Choo J. M., Kanno T., Zain N. M. M., Leong L. E. X., 
 Abell G. C. J., Keeble J. E., Bruce K. D., Mason A. J., Rogers G. B. (2017). 
 Divergent relationships between fecal microbiota and metabolome following 
 distinct antibiotic-induced disruptions. *mSphere*, **2**(1).
 DOI: [10.1128/msphere.00005-17](https://dx.doi.org/10.1128/msphere.00005-17).
 
-[2] <a name="BH"></a> Benjamini Y, Hochberg Y (1995). Controlling the false 
+[3] <a name="BH"></a> Benjamini Y, Hochberg Y (1995). Controlling the false 
 discovery rate: a practical and powerful approach to multiple testing. 
 *Journal of the Royal Statistical Society, Series B*, **57**(1): 289–300. 
 DOI: [10.1111/j.2517-6161.1995.tb02031.x](https://dx.doi.org/10.1111/j.2517-6161.1995.tb02031.x)

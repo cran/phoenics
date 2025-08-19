@@ -1,3 +1,8 @@
+# phoenics 0.6 [2025-07-19]
+
+* added citation of published article
+* changed maintainer
+
 # phoenics 0.5 [2025-12-29]
 
 * added a vignette

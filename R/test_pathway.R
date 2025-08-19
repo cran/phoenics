@@ -93,6 +93,10 @@
 #' Remi Servien <remi.servien@inrae.fr>\cr
 #' Nathalie Vialaneix <nathalie.vialaneix@inrae.fr>
 #' 
+#' @references Guilmineau C., Tremblay-Franco M., Vialaneix N., Servien R. 
+#' (2025) phoenics: a novel statistical approach for longitudinal metabolomic 
+#' pathway analysis. \emph{BMC Bioinformatics}, \strong{26}, 105.
+#' 
 #' @export
 
 test_pathway <- function(quantif, design, pathways = "auto", fixed, random, 

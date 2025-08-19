@@ -108,6 +108,11 @@ if (requireNamespace("KEGGREST", quietly = TRUE)) {
 }
 
 }
+\references{
+Guilmineau C., Tremblay-Franco M., Vialaneix N., Servien R. 
+(2025) phoenics: a novel statistical approach for longitudinal metabolomic 
+pathway analysis. \emph{BMC Bioinformatics}, \strong{26}, 105.
+}
 \seealso{
 \link{pathway_search} for the automatic annotation of metabolites in KEGG 
 pathways.
